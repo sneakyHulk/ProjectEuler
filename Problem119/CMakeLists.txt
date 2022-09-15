@@ -1,0 +1,2 @@
+add_executable(Problem119 main.cpp)
+target_link_libraries(Problem119)

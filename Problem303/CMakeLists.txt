@@ -1,0 +1,2 @@
+add_executable(Problem303 main.cpp)
+target_link_libraries(Problem303)

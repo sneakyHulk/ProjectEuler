@@ -1,0 +1,2 @@
+add_executable(Problem206 main.cpp)
+target_link_libraries(Problem206)
