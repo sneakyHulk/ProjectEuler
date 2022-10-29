@@ -32,7 +32,7 @@ public:
     static auto fill() {
         std::vector<edge> edges;
         std::ifstream in;
-        in.open("triangle.txt");
+        in.open("input.txt");
 
         int k = 0;
         for (int i = 0; i < 14; ++i) {
