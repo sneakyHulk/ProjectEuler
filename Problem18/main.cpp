@@ -63,7 +63,8 @@ public:
         return adjacency_list;
     }
 
-    static std::stack<int> topoligical_sort(std::vector<std::vector<adjacent>> const& adjacency_list, unsigned int num_nodes) {
+    static std::stack<int>
+    topoligical_sort(std::vector<std::vector<adjacent>> const &adjacency_list, unsigned int num_nodes) {
         std::vector<bool> visited(num_nodes, false);
         std::stack<int> st;
 
@@ -78,10 +79,10 @@ public:
 
 private:
     static void _topoligical_sort(int node, std::vector<std::vector<adjacent>> const &adjacency_list,
-                           std::vector<bool> &visited, std::stack<int> &st) {
+                                  std::vector<bool> &visited, std::stack<int> &st) {
         visited[node] = true;
 
-        for (auto const& it: adjacency_list[node]) {
+        for (auto const &it: adjacency_list[node]) {
             if (!visited[it.vertex]) {
                 _topoligical_sort(it.vertex, adjacency_list, visited, st);
             }
@@ -91,14 +92,17 @@ private:
     }
 
 public:
-    static std::vector<int> shortest_distance(std::vector<std::vector<adjacent>> const& adjacency_list, std::stack<int> st, unsigned int num_nodes) {
+    static std::vector<int>
+    shortest_distance(std::vector<std::vector<adjacent>> const &adjacency_list, std::stack<int> st,
+                      unsigned int num_nodes) {
         std::vector<int> distances(num_nodes, std::numeric_limits<int>::max());
 
         distances[0] = 0;
-        while(!st.empty()) {
-            int node = st.top(); st.pop();
+        while (!st.empty()) {
+            int node = st.top();
+            st.pop();
 
-            for (auto const& it: adjacency_list[node]) {
+            for (auto const &it: adjacency_list[node]) {
                 if (distances[node] + it.weight < distances[it.vertex]) {
                     distances[it.vertex] = it.weight + distances[node];
                 }
@@ -108,14 +112,17 @@ public:
         return distances;
     }
 
-    static std::vector<int> greatest_distance(std::vector<std::vector<adjacent>> const& adjacency_list, std::stack<int> st, unsigned int num_nodes) {
+    static std::vector<int>
+    greatest_distance(std::vector<std::vector<adjacent>> const &adjacency_list, std::stack<int> st,
+                      unsigned int num_nodes) {
         std::vector<int> distances(num_nodes, std::numeric_limits<int>::min());
 
         distances[0] = 0;
-        while(!st.empty()) {
-            int node = st.top(); st.pop();
+        while (!st.empty()) {
+            int node = st.top();
+            st.pop();
 
-            for (auto const& it: adjacency_list[node]) {
+            for (auto const &it: adjacency_list[node]) {
                 if (distances[node] + it.weight > distances[it.vertex]) {
                     distances[it.vertex] = it.weight + distances[node];
                 }

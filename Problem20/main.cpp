@@ -4,7 +4,7 @@
 
 int main() {
     bigint fak = 1;
-    for(int i = 1; i <= 100; ++i) {
+    for (int i = 1; i <= 100; ++i) {
         fak *= i;
     }
 

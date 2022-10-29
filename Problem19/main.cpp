@@ -1,7 +1,6 @@
 #include <iostream>
 
 int main() {
-
     int January = 31;
     int February = 28;
     int March = 31;
