@@ -18,3 +18,7 @@ If you could check one trillion (1012) routes every second it would take over tw
 There is an efficient algorithm to solve it. ;o)
 
 ---
+
+Answer:  7273
+
+Completed on Sat, 29 Oct 2022, 14:40
