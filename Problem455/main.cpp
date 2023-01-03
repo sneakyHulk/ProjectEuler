@@ -197,7 +197,7 @@ uint64_t binpow(uint64_t a, uint64_t b, uint64_t m) {
 }
 
 int main() {
-    omp_set_num_threads(24);
+    omp_set_num_threads(8);
 
     auto start = std::chrono::system_clock::now();
 
