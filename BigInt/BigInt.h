@@ -1943,7 +1943,6 @@ BigInt BigInt::operator--(int) {
 #ifndef BIG_INT_IO_STREAM_OPERATORS_HPP
 #define BIG_INT_IO_STREAM_OPERATORS_HPP
 
-
 /*
     BigInt from input stream
     ------------------------
@@ -1956,7 +1955,6 @@ std::istream &operator>>(std::istream &in, BigInt &num) {
 
     return in;
 }
-
 
 /*
     BigInt to output stream
