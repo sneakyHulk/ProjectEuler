@@ -1,2 +1,2 @@
-add_executable(Problem29 main.cpp bigint.h)
-target_link_libraries(Problem29)
+add_executable(Problem29 main.cpp)
+target_link_libraries(Problem29 BigInt)
