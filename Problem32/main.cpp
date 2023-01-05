@@ -41,7 +41,7 @@ int main() {
         bar.update();
     }
 
-    std::cout << nums.back() << std::endl;
+    std::cout << sum << std::endl;
 
     //progressbar bar(9876543210U);
     //uint64_t sum = 0;

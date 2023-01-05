@@ -56,12 +56,12 @@ public:
 
     // default constructor, must call set_niter later
     inline progressbar();
-    inline progressbar(int64_t n, bool showbar=true, std::ostream& out=std::cerr);
+    inline progressbar(int n, bool showbar=true, std::ostream& out=std::cerr);
 
     // reset bar to use it again
     inline void reset();
     // set number of loop iterations
-    inline void set_niter(int64_t iter);
+    inline void set_niter(int iter);
     // chose your style
     inline void set_done_char(const std::string& sym) {done_char = sym;}
     inline void set_todo_char(const std::string& sym) {todo_char = sym;}
@@ -75,9 +75,9 @@ public:
     inline void update();
 
 private:
-    int64_t progress;
-    int64_t n_cycles;
-    int64_t last_perc;
+    int progress;
+    int n_cycles;
+    int last_perc;
     bool do_show_bar;
     bool update_is_called;
 
@@ -101,7 +101,7 @@ inline progressbar::progressbar() :
         closing_bracket_char("]"),
         output(std::cerr) {}
 
-inline progressbar::progressbar(int64_t n, bool showbar, std::ostream& out) :
+inline progressbar::progressbar(int n, bool showbar, std::ostream& out) :
         progress(0),
         n_cycles(n),
         last_perc(0),
@@ -117,14 +117,12 @@ inline void progressbar::reset() {
     progress = 0,
             update_is_called = false;
     last_perc = 0;
-    return;
 }
 
-inline void progressbar::set_niter(int64_t niter) {
+inline void progressbar::set_niter(int niter) {
     if (niter <= 0) throw std::invalid_argument(
                 "progressbar::set_niter: number of iterations null or negative");
     n_cycles = niter;
-    return;
 }
 
 inline void progressbar::update() {
@@ -133,7 +131,7 @@ inline void progressbar::update() {
                 "progressbar::update: number of cycles not set");
 
     if (!update_is_called) {
-        if (do_show_bar == true) {
+        if (do_show_bar) {
             output << opening_bracket_char;
             for (int _ = 0; _ < 50; _++) output << todo_char;
             output << closing_bracket_char << " 0%";
@@ -155,7 +153,7 @@ inline void progressbar::update() {
         else if (perc  > 10 and perc < 100) output << "\b\b\b" << perc << '%';
         else if (perc == 100)               output << "\b\b\b" << perc << '%';
     }
-    if (do_show_bar == true) {
+    if (do_show_bar) {
         // update bar every ten units
         if (perc % 2 == 0) {
             // erase closing bracket
@@ -184,8 +182,6 @@ inline void progressbar::update() {
     last_perc = perc;
     ++progress;
     output << std::flush;
-
-    return;
 }
 
 #endif
