@@ -1,235 +1,221 @@
 #include <iostream>
 #include <cstdint>
-#include <array>
-#include <vector>
-#include <iostream>
-#include <cinttypes>
-#include <chrono>
-#include <omp.h>
-#include <iomanip>
-#include <stdexcept>
+#include <set>
 
-///@brief Used to time how intervals in code.
-///
-///Such as how long it takes a given function to run, or how long I/O has taken.
-class Timer {
-private:
-    typedef std::chrono::high_resolution_clock clock;
-    typedef std::chrono::duration<double, std::ratio<1> > second;
+constexpr bool check_pandigital(unsigned int multiplicand, unsigned int multiplier, unsigned int product) {
+    uint_fast16_t unique_values = 1; // damit keine 0 auftritt
 
-    std::chrono::time_point<clock> start_time; ///< Last time the timer was started
-    double accumulated_time;                   ///< Accumulated running time since creation
-    bool running;                              ///< True when the timer is running
-
-public:
-    Timer() {
-        accumulated_time = 0;
-        running = false;
+    while (product > 0U) {
+        uint_fast16_t const mask = 1U << (product % 10U);
+        if (unique_values & mask) return false;
+        unique_values |= mask;
+        product /= 10U;
     }
 
-    ///Start the timer. Throws an exception if timer was already running.
-    void start() {
-        if (running)
-            throw std::runtime_error("Timer was already started!");
-        running = true;
-        start_time = clock::now();
+    while (multiplicand > 0U) {
+        uint_fast16_t const mask = 1U << (multiplicand % 10U);
+        if (unique_values & mask) return false;
+        unique_values |= mask;
+        multiplicand /= 10U;
     }
 
-    ///Stop the timer. Throws an exception if timer was already stopped.
-    ///Calling this adds to the timer's accumulated time.
-    ///@return The accumulated time in seconds.
-    double stop() {
-        if (!running)
-            throw std::runtime_error("Timer was already stopped!");
-
-        accumulated_time += lap();
-        running = false;
-
-        return accumulated_time;
+    while (multiplier > 0U) {
+        uint_fast16_t const mask = 1U << (multiplier % 10U);
+        if (unique_values & mask) return false;
+        unique_values |= mask;
+        multiplier /= 10U;
     }
 
-    ///Returns the timer's accumulated time. Throws an exception if the timer is
-    ///running.
-    double accumulated() {
-        if (running)
-            throw std::runtime_error("Timer is still running!");
-        return accumulated_time;
-    }
+    if (unique_values == 1023U) return true;
 
-    ///Returns the time between when the timer was started and the current
-    ///moment. Throws an exception if the timer is not running.
-    double lap() {
-        if (!running)
-            throw std::runtime_error("Timer was not started!");
-        return std::chrono::duration_cast<second>(clock::now() - start_time).count();
-    }
-
-    ///Stops the timer and resets its accumulated time. No exceptions are thrown
-    ///ever.
-    void reset() {
-        accumulated_time = 0;
-        running = false;
-    }
-};
-
-
-///@brief Manages a console-based progress bar to keep the user entertained.
-///
-///Defining the global `NOPROGRESS` will
-///disable all progress operations, potentially speeding up a program. The look
-///of the progress bar is shown in ProgressBar.hpp.
-class ProgressBar {
-private:
-    uint32_t total_work;    ///< Total work to be accomplished
-    uint32_t next_update;   ///< Next point to update the visible progress bar
-    uint32_t call_diff;     ///< Interval between updates in work units
-    uint32_t work_done;
-    uint16_t old_percent;   ///< Old percentage value (aka: should we update the progress bar) --> Maybe that we do not need this
-    Timer timer;         ///< Used for generating ETA
-
-    ///Clear current line on console so a new progress bar can be written
-    void clearConsoleLine() const {
-        std::cerr << "\r\033[2K" << std::flush;
-    }
-
-public:
-    ///@brief Start/reset the progress bar.
-    ///@param total_work  The amount of work to be completed, usually specified in cells.
-    void start(uint32_t total_work) {
-        timer = Timer();
-        timer.start();
-        this->total_work = total_work;
-        next_update = 0;
-        call_diff = total_work / 200;
-        old_percent = 0;
-        work_done = 0;
-        clearConsoleLine();
-    }
-
-    ///@brief Update the visible progress bar, but only if enough work has been done.
-    ///
-    ///Define the global `NOPROGRESS` flag to prevent this from having an
-    ///effect. Doing so may speed up the program's execution.
-    void update(uint32_t work_done0) {
-        //Provide simple way of optimizing out progress updates
-#ifdef NOPROGRESS
-        return;
-#endif
-
-        //Quick return if this isn't the main thread
-        if (omp_get_thread_num() != 0)
-            return;
-
-        //Update the amount of work done
-        work_done = work_done0;
-
-        //Quick return if insufficient progress has occurred
-        if (work_done < next_update)
-            return;
-
-        //Update the next time at which we'll do the expensive update stuff
-        next_update += call_diff;
-
-        //Use a uint16_t because using a uint8_t will cause the result to print as a
-        //character instead of a number
-        uint16_t percent = (uint8_t) (work_done * omp_get_num_threads() * 100 / total_work);
-
-        //Handle overflows
-        if (percent > 100)
-            percent = 100;
-
-        //In the case that there has been no update (which should never be the case,
-        //actually), skip the expensive screen print
-        if (percent == old_percent)
-            return;
-
-        //Update old_percent accordingly
-        old_percent = percent;
-
-        //Print an update string which looks like this:
-        //  [================================================  ] (96% - 1.0s - 4 threads)
-        std::cerr << "\r\033[2K["
-                  << std::string(percent / 2, '=') << std::string(50 - percent / 2, ' ')
-                  << "] ("
-                  << percent << "% - "
-                  << std::fixed << std::setprecision(1) << timer.lap() / percent * (100 - percent)
-                  << "s - "
-                  << omp_get_num_threads() << " threads)" << std::flush;
-    }
-
-    ///Increment by one the work done and update the progress bar
-    ProgressBar &operator++() {
-        //Quick return if this isn't the main thread
-        if (omp_get_thread_num() != 0)
-            return *this;
-
-        work_done++;
-        update(work_done);
-        return *this;
-    }
-
-    ///Stop the progress bar. Throws an exception if it wasn't started.
-    ///@return The number of seconds the progress bar was running.
-    double stop() {
-        clearConsoleLine();
-
-        timer.stop();
-        return timer.accumulated();
-    }
-
-    ///@return Return the time the progress bar ran for.
-    double time_it_took() {
-        return timer.accumulated();
-    }
-
-    uint32_t cellsProcessed() const {
-        return work_done;
-    }
-};
-
-constexpr bool is_unique(uint64_t num) {
-    bool unique_values[10] = {false, false, false, false, false, false, false, false, false, false};
-
-    while (num > 0) {
-        if (unique_values[num % 10U]) return false;
-        unique_values[num % 10U] = true;
-        num /= 10U;
-    }
-
-    return true;
+    return false;
 }
 
-int main() {
-    omp_set_num_threads(8);
 
-    std::vector<uint64_t> nums(8877690U);
-    for (uint64_t i = 1, j = 0; i <= 9876543210U; ++i) {
+/*
+ * 1 + 1 = 7; // max: 81
+   1 + 2 = 6; // max: 891
+   1 + 3 = 5; // max: 8991
+   1 + 4 = 4; <--------------- possible
+   1 * 5 = 3; // min: 11111
+   2 + 2 = 5; // max: 9801
+   2 + 3 = 4; <--------------- possible
+   3 + 1 = 5;
+
+    ...
+ */
+
+int main() {
+    std::set<unsigned int> products;
+
+    for (unsigned int multiplicand = 1U; multiplicand <= 9U; ++multiplicand) {
+        for (unsigned int multiplier = 1234U; multiplier <= 9876U; ++multiplier) {
+            unsigned int const product = multiplicand * multiplier;
+            if (check_pandigital(multiplicand, multiplier, product)) {
+                products.insert(product);
+                std::cout << multiplicand << " * " << multiplier << " = " << product << std::endl;
+            }
+        }
+    }
+
+
+    for (unsigned int multiplicand = 1U; multiplicand <= 98U; ++multiplicand) {
+        for (unsigned int multiplier = 123U; multiplier <= 987U; ++multiplier) {
+            unsigned int const product = multiplicand * multiplier;
+            if (check_pandigital(multiplicand, multiplier, product)) {
+                products.insert(product);
+                std::cout << multiplicand << " * " << multiplier << " = " << product << std::endl;
+            }
+        }
+    }
+
+    unsigned int sum = 0U;
+    for (unsigned int const e: products) {
+        sum += e;
+    }
+
+    std::cout << sum << std::endl;
+}
+
+/*
+ * auto start = std::chrono::system_clock::now();
+
+    unsigned int test = 0;
+    std::vector<uint64_t> nums(986409);
+    for (uint64_t i = 1, j = 0; i <= 987654321U; ++i) {
         if (is_unique(i)) {
+            ++test;
             nums[j++] = i;
         }
     }
 
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "took: " << diff.count() << "s" << std::endl;
+
+    std::cout << test << std::endl;
     std::cout << "ready producing!" << std::endl;
 
-
-    ProgressBar pg;
-    pg.start(8877690U);
-
-    uint64_t sum = 0;
-
-#pragma omp parallel for default(none) schedule(static, 1000) reduction(+:sum) shared(pg) firstprivate(nums)
-    for (unsigned int i = 0; i < 8877690U; ++i) {
-        for (unsigned int j = i; j < 8877690U; ++j) {
-            uint64_t product = nums[i] * nums[j];
-            if (product <= 9876543210U && is_unique(product)) {
-                sum += product;
-            }
+    uint64_t sum = 0U;
+    for (unsigned int i = 0U; i < 986409U; ++i) {
+        if (check_product(nums, nums[i])) {
+            sum += nums[i];
+            continue;
         }
-        pg.update(i);
     }
+
+    auto end2 = std::chrono::system_clock::now();
+    std::chrono::duration<double> diff2 = end2 - end;
+    std::cout << "took: " << diff2.count() << "s" << std::endl;
 
     std::cout << sum << std::endl;
 
+    return 0;
+}
+/*
+    //ProgressBar pg;
+    //pg.start(10000U);
+
+//#pragma omp parallel for default(none) schedule(dynamic, 256) reduction(+:sum) firstprivate(nums)
+    for (unsigned int i = 0; i < 986409U; ++i) {
+        for (unsigned int j = i; j < 986409U; ++j) {
+            uint64_t const product = nums[i] * nums[j];
+            if(product > 987654321U) break;
+            if (is_unique(product)) {
+                sum += product;
+
+                std::cout << nums[i] << " * " << nums[j] << " = " << product << std::endl;
+            }
+        }
+        //std::cout << i << std::endl;
+
+        //if (i % (4206095U / 10000U) == 0U) pg.update(i * 10000U / 4206095U);
+    }
+
+    auto end2 = std::chrono::system_clock::now();
+    std::chrono::duration<double> diff2 = end2 - end;
+    std::cout << "took: " << diff2.count() << "s" << std::endl;
+
+    std::cout << sum << std::endl;
+
+
+//    ProgressBar pg;
+//    pg.start(100U);
+//
+//    uint64_t sum = 0;
+//
+//    uint8_t update_value = 0;
+//
+//    for (unsigned int i = 0; i < 8877690U; ++i) {
+//        for (unsigned int j = i; j < 8877690U; ++j) {
+//            uint64_t product = nums[i] * nums[j];
+//            if (product <= 9876543210U && is_unique(product)) {
+//                sum += product;
+//            }
+//        }
+//        if (i % (8877690U / 100) == 0) pg.update(update_value++);
+//    }
+
+//    std::cout << sum << std::endl;
+
+
+ constexpr bool is_unique(uint64_t num) { // muss > 0 sein
+    //bool unique_values[10] = {true, false, false, false, false, false, false, false, false, false};
+    uint_fast16_t unique_values = 1;
+
+    for (unsigned int i = 0; i < 8; ++i) {
+        uint_fast16_t const mask = 1U << (num % 10U);
+        if (unique_values & mask) return false;
+        unique_values |= mask;
+        num /= 10U;
+
+        if (num == 0) return true;
+    }
+
+    uint_fast16_t const mask = 1U << (num % 10U);
+    return !(unique_values & mask);
+
+    //unique_values |= 1 << num % 10U;
+    //num /= 10U;
+//
+    //for (unsigned int i = 1; i < 10; ++i) {
+    //    if (num == 0) return true;
+//
+    //    if (unique_values & (1 << num % 10U)) {
+    //        return false;
+    //    }
+    //    num /= 10U;
+    //}
+//
+    //return true;
+
+    //while (num > 0) {
+    //    if (unique_values[num % 10U]) return false;
+    //    unique_values[num % 10U] = true;
+//        num /= 10U;
+    //}
+
+
+}
+
+//constexpr bool check_product(std::vector<uint64_t> const &nums, uint64_t const num) {
+//    for (unsigned int j = 0U; j < 986409U; ++j) {
+//        if (nums[j] * nums[j] > num) return false;
+//        for (unsigned int k = j; k < 986409U; ++k) {
+//            uint64_t const product = nums[j] * nums[k];
+//            if (product > num) break;
+//            if (product == num) {
+//                if (check_pandigital(nums[j], nums[k], num)) {
+//                    std::cout << nums[j] << " * " << nums[k] << " = " << num << std::endl;
+//                    return true;
+//                }
+//            }
+//        }
+//    }
+//
+//    std::cout << "NOT POSSIBLE" << std::endl;
+//    return false;
+//}
 
     /*
 #pragma omp parallel for default(none) schedule(static, 1000) reduction(+:sum) shared(pg)
@@ -326,4 +312,3 @@ int main() {
             }
         }
     }*/
-}
