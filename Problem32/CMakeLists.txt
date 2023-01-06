@@ -1,3 +1,6 @@
+find_package(OpenMP REQUIRED)
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,stack-size=134217728")
 add_executable(Problem32 main.cpp progressbar.h)
-set_target_properties(Problem32 PROPERTIES LINK_FLAGS -Wl,-z,stack-size=1000000000)
-target_link_libraries(Problem32)
+#set_target_properties(Problem32 PROPERTIES LINK_FLAGS -Wl,-z,stack-size=1073741824)
+target_link_libraries(Problem32 PUBLIC OpenMP::OpenMP_CXX)
+target_compile_options(Problem32 PUBLIC -march=native)
