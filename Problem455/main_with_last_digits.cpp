@@ -63,7 +63,8 @@ int main() {
         }
     }
 
-#pragma omp parallel for default(none) firstprivate(sub_last_digits_sorted, last_digits) shared(std::cout)
+    unsigned long long int erg = 0;
+#pragma omp parallel for default(none) firstprivate(sub_last_digits_sorted, last_digits) shared(std::cout) reduction(+ : erg)
     for (unsigned long long int n = 2; n <= 1000; ++n) {
 
         const uint_fast8_t last_digit_n = get_last_digit(n);
@@ -74,14 +75,14 @@ int main() {
             if (second_last_digit_n % 2 == 0) { // is even
                 for (unsigned long long int x = 1000000000; x >= 100; x -= 100) {
                     if (x - 75 == modpow<unsigned long long int>(n, x - 75, 1000000000)) { // ends in 25
-                        std::cout << "n: " << n << ", f(n): " << x - 75 << std::endl; break;
+                        std::cout << "n: " << n << ", f(n): " << x - 75 << std::endl; erg += x - 75; break;
                     }
                 }
             }
             else { // is odd
                 for (unsigned long long int x = 1000000000; x >= 100; x -= 100) {
                     if (x - 25 == modpow<unsigned long long int>(n, x - 25, 1000000000)) { // ends in 75
-                        std::cout << "n: " << n << ", f(n): " << x - 25 << std::endl; break;
+                        std::cout << "n: " << n << ", f(n): " << x - 25 << std::endl; erg += x - 25; break;
                     }
                 }
             }
@@ -95,11 +96,21 @@ int main() {
 
             for (size_t i = 0; i < size_sub_last_digits_sorted; ++i) {
                 if (x - current_ptr_sub_last_digits_sorted[i] == modpow<unsigned long long int>(n, x - current_ptr_sub_last_digits_sorted[i], 1000000000)) {
-                    std::cout << "n: " << n << ", f(n): " << x - current_ptr_sub_last_digits_sorted[i] << std::endl; break;
+                    std::cout << "n: " << n << ", f(n): " << x - current_ptr_sub_last_digits_sorted[i] << std::endl; erg += x - current_ptr_sub_last_digits_sorted[i]; goto end;
                 }
             }
+
+            
         }
+
+        std::cout << "n: " << n << ", f(n): " << 0 << std::endl;
+
+        end:
+        continue;
     }
+
+    std::cout << std::endl;
+    std::cout << "ERG: " << erg << std::endl;
 
     /*for (unsigned long long int n = 5; n <= 1000; n+=5) {
         for (unsigned long long int x = 1000000000; x >= 100; x -= 100) {
