@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdint>
 #include <string>
+#include <limits>
 
 template<typename T>
 class max_value {

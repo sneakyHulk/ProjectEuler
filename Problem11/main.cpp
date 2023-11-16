@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 
 template<typename T>
 class max_value {
