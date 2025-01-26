@@ -1,0 +1,2 @@
+add_executable(Problem62 main.cpp)
+target_link_libraries(Problem62 PUBLIC common boost_multi_index)

@@ -10,7 +10,7 @@ fn decrypt<const CIPHER_LENGTH: usize, const PASSWORD_LENGTH: usize>(cipher: &[u
 
 fn test_on_ascii_character<const CIPHER_LENGTH: usize>(decipher: &[u8; CIPHER_LENGTH]) -> bool {
     for e in decipher {
-        if *e != 14 && *e != 10 && *e != 9 && (*e < 20 || *e > 127) {
+        if *e != 13 && *e != 10 && *e != 9 && (*e < 20 || *e > 127) {
             return false;
         }
     }

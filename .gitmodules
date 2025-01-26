@@ -1,0 +1,9 @@
+[submodule "common"]
+	path = common
+	url = https://github.com/sneakyHulk/common.git
+[submodule "boost"]
+	path = boost
+	url = https://github.com/boostorg/boost.git
+[submodule "pmc"]
+	path = pmc
+	url = https://github.com/jingnanshi/pmc.git
